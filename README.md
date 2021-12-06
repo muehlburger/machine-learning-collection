@@ -1,2 +1,2 @@
-# machine-learning-collection
-This repo contains implementation of various machine learning related algorithms.
+# Machine-Learning-Collection
+This repository contains various implementations of machine learning algorithms
