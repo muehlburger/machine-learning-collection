@@ -128,8 +128,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-*/dataset
-*/logs
+**/dataset
+**/logs
 
 
 # User-specific stuff:
@@ -154,7 +154,7 @@ dmypy.json
 # Mongo Explorer plugin:
 .idea/mongoSettings.xml
 
-.idea/
+**.idea/
 
 ## File-based project format:
 *.iws
