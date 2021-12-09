@@ -18,7 +18,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 LEARNING_RATE = 2e-4  # could also use two lrs, one for gen and one for disc
 BATCH_SIZE = 128
 IMAGE_SIZE = 64
-CHANNELS_IMG = 1
+CHANNELS_IMG = 3
 NOISE_DIM = 100
 NUM_EPOCHS = 5
 FEATURES_DISC = 64
@@ -35,11 +35,10 @@ transforms = transforms.Compose(
 )
 
 # If you train on MNIST, remember to set channels_img to 1
-dataset = datasets.MNIST(root="dataset/", train=True, transform=transforms,
-                       download=True)
+#dataset = datasets.MNIST(root="dataset/", train=True, transform=transforms, download=True)
 
 # comment mnist above and uncomment below if train on CelebA
-#dataset = datasets.ImageFolder(root="celeb_dataset", transform=transforms)
+dataset = datasets.ImageFolder(root="dataset/celeb_dataset", transform=transforms)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 gen = Generator(NOISE_DIM, CHANNELS_IMG, FEATURES_GEN).to(device)
 disc = Discriminator(CHANNELS_IMG, FEATURES_DISC).to(device)
