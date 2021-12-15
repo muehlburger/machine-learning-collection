@@ -1,5 +1,5 @@
 """
-Discriminator and Generator implementation
+Discriminator and Generator implementation from DCGAN paper
 """
 
 import torch
@@ -12,7 +12,7 @@ class Critic(nn.Module):
         self.img_size = img_size
         self.disc = nn.Sequential(
             # input: N x channels_img x 64 x 64
-            nn.Conv2d(channels_img + 1, features_d, kernel_size=4, stride=2, padding=1),
+            nn.Conv2d(channels_img+1, features_d, kernel_size=4, stride=2, padding=1),
             nn.LeakyReLU(0.2),
             # _block(in_channels, out_channels, kernel_size, stride, padding)
             self._block(features_d, features_d * 2, 4, 2, 1),
@@ -21,6 +21,7 @@ class Critic(nn.Module):
             # After all _block img output is 4x4 (Conv2d below makes into 1x1)
             nn.Conv2d(features_d * 8, 1, kernel_size=4, stride=2, padding=0),
         )
+
         self.embed = nn.Embedding(num_classes, img_size * img_size)
 
     def _block(self, in_channels, out_channels, kernel_size, stride, padding):
@@ -33,28 +34,18 @@ class Critic(nn.Module):
         )
 
     def forward(self, x, labels):
-        embedding = self.embed(labels).view(labels.shape[0], 1, self.img_size, -1)
-        print("x.shape: ", x.shape)
-        print("embedding.shape: ", embedding.shape)
-        x = torch.cat([x, embedding], dim=1) # N x C x img_size (H), img_size (W)
+        embedding = self.embed(labels).view(labels.shape[0], 1, self.img_size, self.img_size)
+        x = torch.cat([x, embedding], dim=1) # N x C x img_size (H) x img_size (W)
         return self.disc(x)
 
 
 class Generator(nn.Module):
-    def __init__(
-            self,
-            channels_noise,
-            channels_img,
-            features_g,
-            num_classes,
-            img_size,
-            embed_size,
-    ):
+    def __init__(self, channels_noise, channels_img, features_g, num_classes, img_size, embed_size):
         super(Generator, self).__init__()
         self.img_size = img_size
         self.net = nn.Sequential(
             # Input: N x channels_noise x 1 x 1
-            self._block(channels_noise + embed_size, features_g * 16, 4, 1, 0),  # img: 4x4
+            self._block(channels_noise+embed_size, features_g * 16, 4, 1, 0),  # img: 4x4
             self._block(features_g * 16, features_g * 8, 4, 2, 1),  # img: 8x8
             self._block(features_g * 8, features_g * 4, 4, 2, 1),  # img: 16x16
             self._block(features_g * 4, features_g * 2, 4, 2, 1),  # img: 32x32
@@ -64,7 +55,6 @@ class Generator(nn.Module):
             # Output: N x channels_img x 64 x 64
             nn.Tanh(),
         )
-
         self.embed = nn.Embedding(num_classes, embed_size)
 
     def _block(self, in_channels, out_channels, kernel_size, stride, padding):
@@ -79,7 +69,7 @@ class Generator(nn.Module):
     def forward(self, x, labels):
         # latent vector z: N x noise_dim x 1 x 1
         embedding = self.embed(labels).unsqueeze(2).unsqueeze(3)
-        x = torch.cat((x, embedding), dim=1)
+        x = torch.cat([x, embedding], dim=1)
         return self.net(x)
 
 
@@ -101,4 +91,4 @@ def test():
     assert gen(z).shape == (N, in_channels, H, W), "Generator test failed"
 
 
-#test()
+# test()
