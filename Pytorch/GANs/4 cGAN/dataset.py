@@ -35,6 +35,10 @@ def write_to_total():
     X.to_csv("dataset/APG/total.csv", index=False)
 
 def test():
+
+    transorms = nn.transforms.Compose(
+
+    )
     dataset = APGDataset(csv_file="dataset/APG/total.csv", root_dir="dataset/APG/", transforms=transforms.Tensor())
     dataloader = DataLoader(dataset=dataset, batch_size=4096, shuffle=True)
 
@@ -44,4 +48,4 @@ def test():
 
         print(data.shape, labels.shape)
 
-#test()
+test()

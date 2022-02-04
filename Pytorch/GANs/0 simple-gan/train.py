@@ -6,53 +6,27 @@ import torchvision.datasets as datasets
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard
-
-
-class Discriminator(nn.Module):
-    def __init__(self, in_features):
-        super().__init__()
-        self.disc = nn.Sequential(
-            nn.Linear(in_features, 128),
-            nn.LeakyReLU(0.01),
-            nn.Linear(128, 1),
-            nn.Sigmoid(),
-        )
-
-    def forward(self, x):
-        return self.disc(x)
-
-
-class Generator(nn.Module):
-    def __init__(self, z_dim, img_dim):
-        super().__init__()
-        self.gen = nn.Sequential(
-            nn.Linear(z_dim, 256),
-            nn.LeakyReLU(0.01),
-            nn.Linear(256, img_dim),
-            nn.Tanh(),  # normalize inputs to [-1, 1] so make outputs [-1, 1]
-        )
-
-    def forward(self, x):
-        return self.gen(x)
-
+from dataset import APGDataset
+from model import Generator, Discriminator
 
 # Hyperparameters etc.
 device = "cuda" if torch.cuda.is_available() else "cpu"
 lr = 3e-4
-z_dim = 64
-image_dim = 28 * 28 * 1  # 784
-batch_size = 32
-num_epochs = 50
+z_dim = 128
+image_dim = 21
+batch_size = 512
+num_epochs = 10
 
 disc = Discriminator(image_dim).to(device)
 gen = Generator(z_dim, image_dim).to(device)
 fixed_noise = torch.randn((batch_size, z_dim)).to(device)
-transforms = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,)),]
-)
 
-dataset = datasets.MNIST(root="dataset/", transform=transforms, download=True)
-loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+dataset = APGDataset(csv_file="dataset/APG/normal.csv", root_dir="dataset/APG/")
+loader = DataLoader(
+    dataset,
+    batch_size=batch_size,
+    shuffle=False,
+)
 opt_disc = optim.Adam(disc.parameters(), lr=lr)
 opt_gen = optim.Adam(gen.parameters(), lr=lr)
 criterion = nn.BCELoss()
@@ -62,7 +36,7 @@ step = 0
 
 for epoch in range(num_epochs):
     for batch_idx, (real, _) in enumerate(loader):
-        real = real.view(-1, 784).to(device)
+        real = real.view(-1, 21).to(device)
         batch_size = real.shape[0]
 
         ### Train Discriminator: max log(D(x)) + log(1 - D(G(z)))
@@ -93,15 +67,19 @@ for epoch in range(num_epochs):
             )
 
             with torch.no_grad():
-                fake = gen(fixed_noise).reshape(-1, 1, 28, 28)
-                data = real.reshape(-1, 1, 28, 28)
+                fake = gen(fixed_noise).reshape(-1, 1, 1, 21)
+                data = real.reshape(-1, 1, 1, 21)
                 img_grid_fake = torchvision.utils.make_grid(fake, normalize=True)
                 img_grid_real = torchvision.utils.make_grid(data, normalize=True)
 
                 writer_fake.add_image(
-                    "Mnist Fake Images", img_grid_fake, global_step=step
+                    "APG Fake", img_grid_fake, global_step=step
                 )
                 writer_real.add_image(
-                    "Mnist Real Images", img_grid_real, global_step=step
+                    "APG Real", img_grid_real, global_step=step
                 )
                 step += 1
+
+# Save model
+torch.save(disc.state_dict(), "models/disc.pt")
+torch.save(gen.state_dict(), "models/gen.pt")

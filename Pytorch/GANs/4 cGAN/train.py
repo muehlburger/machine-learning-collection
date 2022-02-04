@@ -18,8 +18,8 @@ from dataset import APGDataset
 # Hyperparameters etc.
 device = "cuda" if torch.cuda.is_available() else "cpu"
 LEARNING_RATE = 1e-4
-BATCH_SIZE = 128
-IMG_SIZE = 21*21
+BATCH_SIZE = 32
+IMG_SIZE = (3,7)
 CHANNELS_IMG = 1
 NUM_CLASSES = 2
 GEN_EMBEDDING = 100
